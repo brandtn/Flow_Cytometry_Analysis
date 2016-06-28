@@ -4,6 +4,8 @@ author: "Nathan Brandt"
 date: "June 19th, 2016"
 output: html_document
 ---
+#The final goal of this file is to implement a modular R code for Cytometric Analysis
+
 
 #1) Two samples in four media types analyzed on the Accuri in triplicate .
 #    Strains-
@@ -58,7 +60,6 @@ library(ggplot2)
 #Set working directory to the folder in which you have stored your .fcs files
 #Read in all the fcs files in the directory, with alter.ames changing "-" to "."
 flowData <- read.flowSet(path = "/Users/Brandt/Desktop/GAP1_GFP_ScreenTest/GAP1_GFP_Plate01_Screen/GAP1_GFP_Plate01_SC_FCS_Files", pattern=".fcs", alter.names=TRUE)
-
 
 sample.sheet <- read.csv("/Users/Brandt/Desktop/GAP1_GFP_ScreenTest/GAP1_GFP_Plate01_Screen/GAP1_GFP_Plate01_SC_Screen_Sheet.csv")
 
