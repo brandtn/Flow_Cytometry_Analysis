@@ -29,23 +29,19 @@ output: html_document
   + FL4 filter = 586/15nm   DsRed
 
 ******
-
 ##Step 1: Load relevant libraries 
-
-```{r, eval=FALSE}
-#To get libraries from BioConductor.  This only needs to be run the first time.  Change to eval=TRUE to run.
-source("http://bioconductor.org/biocLite.R")
-biocLite("flowViz")
-biocLite("flowCore")
-```
 
 ```{r}
 #Load libraries
 library(flowCore)
 library(flowViz)
+library(flowQ)
+library(flowStats)
 library(Hmisc)
 library(reshape2)
 library(ggplot2)
+library(flowWorkspace)
+library(ggcyto)
 ```
 
 ###Step 2: Read in all .fcs files in current directory and a sample sheet that contains four columns with 
@@ -59,63 +55,60 @@ library(ggplot2)
 ```{r}
 #Set working directory to the folder in which you have stored your .fcs files
 #Read in all the fcs files in the directory, with alter.ames changing "-" to "."
-flowData <- read.flowSet(path = "/Users/Brandt/Desktop/GAP1_GFP_ScreenTest/GAP1_GFP_Plate01_Screen/GAP1_GFP_Plate01_SC_FCS_Files", pattern=".fcs", alter.names=TRUE)
 
-sample.sheet <- read.csv("/Users/Brandt/Desktop/GAP1_GFP_ScreenTest/GAP1_GFP_Plate01_Screen/GAP1_GFP_Plate01_SC_Screen_Sheet.csv")
+flowData <- read.flowSet(path = "~/Google Drive/Transfer_Folder/GAP1_GFP_Screen_FSC_Files/Plate01_SC", pattern=".fcs", alter.names=TRUE)
 
-
+sample.sheet <- read.csv("~/Google Drive/Transfer_Folder/GAP1_GFP_Screen_DataSheets/Plate01_SC.csv")
 ```
 
 ```{r}
 #Check how many cells were counted in each fcs file
 fsApply(flowData, each_col, length)
 
-
 #The medians of data
 fsApply(flowData, each_col, median)
 
 ```
 
-###Step 4: Transform data and create gates to filter out debris
 
-Apply logicle tranformation of data
+###Step 4: Filter out debris
+
+Filter Data
 ```{r}
-#Perform the logicle transform, which is a log transform for high values that transitions to a linear transformation near zero values
-lgcl <- logicleTransform(w = 0.5, t= 10000, m=4.5) #the parameters w,t, and m define the transformation parameters.
-dataLGCLTransform <- transform(flowData,'FSC.A' = lgcl(`FSC.A`), 'SSC.A' =lgcl(`SSC.A`), 'FL1.A' = lgcl(`FL1.A`), 'FL2.A' = lgcl(`FL2.A`), 'FL3.A' = lgcl(`FL3.A`), 'FL4.A' = lgcl(`FL4.A`),'FSC.H' = lgcl(`FSC.H`),'SSC.H' = lgcl(`SSC.H`),'FL1.H' = lgcl(`FL1.H`),'FL2.H' = lgcl(`FL2.H`),'FL3.H' = lgcl(`FL3.H`),'FL4.H' = lgcl(`FL4.H`)) #applies tranformation to every channel
-
 ##Apply a rectangle gate based on FSC and SSC to remove values that we have determined are typically debris for haploid cells.  This should be adjusted if the cell type is different
 rectGate <- rectangleGate("FSC.A"= c(5.6,7.6),"SSC.A" = c(4.6,6.8))
 
 #Subset the filtered data to remove outliers defined by FFC and SSC 
-filterData <- dataLGCLTransform#Subset(dataLGCLTransform, rectGate) 
+
+filterData <- flowData#Subset(flowData, rectGate) 
 
 #Check medians of filtered data
 fsApply(filterData, each_col, median)
 ```
 
-Plot the rectangle gate used for filtering and determine the proportion of cells used for subsequent analysis
+#Plot the rectangle gate used for filtering and determine the proportion of cells used for subsequent analysis
 ```{r}
 ##Plot the rectangle gate used to filter on the basis of SSC and FSC to ensure that most cells are retained in analysis.
-xyplot(FSC.A ~ SSC.A, data=dataLGCLTransform, ylim=c(4,8),xlim=c(0,8), displayFilter=TRUE, filter=rectGate, smooth=F, xbin=128, stat=T, pos=0.5, abs=T)
+xyplot(FSC.A ~ SSC.A, data=flowData, ylim=c(4,8),xlim=c(0,8), displayFilter=TRUE, filter=rectGate, smooth=F, xbin=128, stat=T, pos=0.5, abs=T)
 ```
 
 
 ###Plot an overview of the data
 ```{r}
 ##Plot FL1(GFP) versus FSC 
-xyplot(FL1.A ~ FSC.A, data=dataLGCLTransform, ylim=c(0,8),xlim=c(4,8),smooth=F, xbin=128)
+xyplot(FL1.A ~ FSC.A, data=filterData, ylim=c(0,8),xlim=c(4,8),smooth=F, xbin=128)
 
 ##Plot FFS versus SSC
-xyplot(SSC.A ~ FSC.A, data=dataLGCLTransform, ylim=c(3,8),xlim=c(4,8), smooth=F, xbin=128)
+xyplot(SSC.A ~ FSC.A, data=filterData, ylim=c(3,8),xlim=c(4,8), smooth=F, xbin=128)
 
 ##Plot FL2(mCherry) versus FSC 
 xyplot(FL2.A ~ FSC.A, data=filterData, ylim=c(0,7),xlim=c(4,8), smooth=F, xbin=128)
 
 ##Plot FL1 (GFP) versus FL2 (Red)
-xyplot(FL1.A ~ FL2.A, data=dataLGCLTransform, ylim=c(0,8),xlim=c(0,6), smooth=F, xbin=128)
+xyplot(FL1.A ~ FL2.A, data=filterData, ylim=c(0,8),xlim=c(0,6), smooth=F, xbin=128)
 
 ```
+
 
 ###Step 5: Quantify fluorescence for each sample and plot a histogram
 
