@@ -71,15 +71,13 @@ fsApply(flowData, each_col, median)
 ```
 
 
-###Step 4: Filter out debris
-
 Filter Data
+#Filter Data
 ```{r}
 ##Apply a rectangle gate based on FSC and SSC to remove values that we have determined are typically debris for haploid cells.  This should be adjusted if the cell type is different
 rectGate <- rectangleGate("FSC.A"= c(5.6,7.6),"SSC.A" = c(4.6,6.8))
 
 #Subset the filtered data to remove outliers defined by FFC and SSC 
-
 filterData <- flowData#Subset(flowData, rectGate) 
 
 #Check medians of filtered data
@@ -91,7 +89,6 @@ fsApply(filterData, each_col, median)
 ##Plot the rectangle gate used to filter on the basis of SSC and FSC to ensure that most cells are retained in analysis.
 xyplot(FSC.A ~ SSC.A, data=flowData, ylim=c(4,8),xlim=c(0,8), displayFilter=TRUE, filter=rectGate, smooth=F, xbin=128, stat=T, pos=0.5, abs=T)
 ```
-
 
 ###Plot an overview of the data
 ```{r}
@@ -113,6 +110,7 @@ xyplot(FL1.A ~ FL2.A, data=filterData, ylim=c(0,8),xlim=c(0,6), smooth=F, xbin=1
 ###Step 5: Quantify fluorescence for each sample and plot a histogram
 
 diagnostic values can be defined for plotting purposes
+###Step 5: Quantify fluorescence for each sample and plot a histogram diagnostic values can be defined for plotting purposes
 ```{r}
 #define critical values that can superimposed on plots for easy visual comparison
 
